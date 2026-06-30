@@ -160,7 +160,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={inputStyle}
-              placeholder="a.uwase@bugesera.rw"
+              placeholder="youremail@example.com"
               required
             />
           </div>
