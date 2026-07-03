@@ -111,9 +111,8 @@ The app will be available at `http://localhost:5173`.
 
 ### Step 4: Log in
 
-Open `http://localhost:5173` in your browser and log in with:
-Email: a.uwase@bugesera.rw
-Password: password123
+Open `http://localhost:5173` in your browser and log in with one of the roles provide
+
 ---
 
 ## Core Features
