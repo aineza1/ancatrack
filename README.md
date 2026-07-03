@@ -2,8 +2,6 @@
 
 AncaTrack is a web-based clinical decision support tool designed for doctors in Rwandan district hospitals. It aggregates blood pressure, proteinuria, and gestational age data collected during routine antenatal care (ANC) visits, detects dangerous BP trajectories using WHO threshold rules, and generates automated pre-eclampsia risk alerts on a doctor-facing dashboard. The system also computes a weighted 0–100 risk score per patient based on six clinical factors, and supports bulk visit import via Excel/CSV upload.
 
-Built as a BSc Software Engineering capstone project by Agape Ineza
-
 ---
 
 ## Live Deployment
@@ -43,33 +41,6 @@ Built as a BSc Software Engineering capstone project by Agape Ineza
 | Auth       | JWT + bcrypt                                        |
 | Deployment | Render (backend Web Service + frontend Static Site) |
 
----
-
-## Project Structure
-
-├── backend/
-│   ├── src/
-│   │   ├── config/
-│   │   ├── controllers/   # Route handlers (auth, patients, alerts, import, users)
-│   │   ├── middleware/     # JWT authentication + role-based access
-│   │   ├── models/        # Mongoose schemas (User, Patient, Alert)
-│   │   ├── routes/        # Express routers
-│   │   ├── utils/         # Alert engine + risk score calculator
-│   │   ├── seed.ts        # Database seeder
-│   │   └── server.ts      # App entry point
-│   └── package.json
-│
-└── frontend/              # React + Vite
-├── src/
-│   ├── assets/        # Background images
-│   ├── components/
-│   │   ├── layout/    # TopNav
-│   │   └── ui/        # RiskScoreCard
-│   ├── hooks/         # useIsMobile responsive hook
-│   ├── pages/         # Dashboard
-│   ├── utils/         # alertEngine.ts, api.ts
-│   └── types/         # Shared TypeScript interfaces
-└── package.json
 
 ---
 
@@ -141,8 +112,7 @@ The app will be available at `http://localhost:5173`.
 ### Step 4: Log in
 
 Open `http://localhost:5173` in your browser and log in with:
-
-Email:    a.uwase@bugesera.rw
+Email: a.uwase@bugesera.rw
 Password: password123
 ---
 
