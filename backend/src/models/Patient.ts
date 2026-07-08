@@ -20,6 +20,7 @@ export interface IPatient extends Document {
   parity: string
   insurance: string
   phone?: string
+  pin?: string
   assignedDoctor: Types.ObjectId
   registeredBy: Types.ObjectId
   isActive: boolean
@@ -48,6 +49,7 @@ const PatientSchema = new Schema<IPatient>(
     parity:         { type: String, required: true },
     insurance:      { type: String, default: 'None' },
     phone:          { type: String },
+    pin:            { type: String, select: false },
     assignedDoctor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     registeredBy:   { type: Schema.Types.ObjectId, ref: 'User', required: true },
     isActive:       { type: Boolean, default: true },
