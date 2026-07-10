@@ -4,6 +4,7 @@ import axios from 'axios'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff } from 'lucide-react'
 import loginBg from '../assets/prenatal visits.png'
+import logo from '../assets/logo.png'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
@@ -114,43 +115,20 @@ export default function Login() {
             marginBottom: 6,
           }}
         >
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              background: '#4a7fa7',
-              borderRadius: 10,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width={22}
-              height={22}
-              fill="none"
-              stroke="#fff"
-              strokeWidth={2}
-            >
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-            </svg>
-          </div>
-          <span style={{ fontSize: 22, fontWeight: 700, color: '#111' }}>
-            AncaTrack
-          </span>
-        </div>
-
-        <p
-          style={{
-            fontSize: 13,
-            color: '#4b5563',
-            marginBottom: 28,
-            fontWeight: 400,
-          }}
-        >
-          Antenatal Care Clinical Decision Support
-        </p>
+          <img
+            src={logo}
+            alt="AncaTrack logo"
+            style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover' }}
+          />
+          <div>
+    <div style={{ fontSize: 22, fontWeight: 700, color: '#111', lineHeight: 1.2 }}>
+      AncaTrack
+    </div>
+    <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+      Antenatal Care Clinical Decision Support
+    </div>
+  </div>
+</div>
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 16 }}>
@@ -225,6 +203,12 @@ export default function Login() {
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
+        <div style={{ marginTop: 10, textAlign: 'center' }}>
+          <span onClick={() => navigate('/patient-login')}
+            style={{ fontSize: 12, color: '#4a7fa7', cursor: 'pointer', fontWeight: 500 }}>
+            Are you a patient? <u>Sign in here</u>
+          </span>
+        </div>
 
         <div style={{ marginTop: 20, textAlign: 'center', fontSize: 12, color: '#6b7280' }}>
           Secure · Confidential · ANC Coordination
