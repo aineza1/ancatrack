@@ -21,7 +21,7 @@ const UserSchema = new Schema<IUser>(
     email:    { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true, minlength: 6 },
     role:     { type: String, enum: ['doctor', 'nurse', 'admin'], required: true },
-    facility: { type: String, default: 'Bugesera District Hospital' },
+    facility: { type: String, default: 'Nyamata District Hospital' },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
