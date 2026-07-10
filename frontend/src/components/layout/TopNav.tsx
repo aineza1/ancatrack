@@ -3,6 +3,7 @@ import { NavLink, useNavigate, Outlet } from 'react-router-dom'
 import { LayoutDashboard, Users, Bell, ClipboardPlus, Settings, LogOut, Menu, X } from 'lucide-react'
 import api from '../../utils/api'
 import { useIsMobile } from '../../hooks/useIsMobile'
+import logo from '../../assets/logo.png'
 
 export default function TopNav() {
   const [alertCount, setAlertCount] = useState(0)
@@ -70,16 +71,11 @@ export default function TopNav() {
           display: 'flex', alignItems: 'center', gap: '9px',
           marginRight: isMobile ? 'auto' : '32px', textDecoration: 'none'
         }}>
-          <div style={{
-            width: 32, height: 32, background: '#4a7fa7',
-            borderRadius: 8, display: 'flex',
-            alignItems: 'center', justifyContent: 'center', flexShrink: 0
-          }}>
-            <svg viewBox="0 0 24 24" width={18} height={18}
-              fill="none" stroke="#fff" strokeWidth={2}>
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-            </svg>
-          </div>
+        <img
+          src={logo}
+          alt="AncaTrack"
+          style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover' }}
+        />
           {(!isMobile || true) && (
             <span style={{ fontSize: 15, fontWeight: 700, color: '#111', whiteSpace: 'nowrap' }}>
               AncaTrack
