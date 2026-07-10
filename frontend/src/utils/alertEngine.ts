@@ -244,3 +244,92 @@ export function formatDate(dateStr: string): string {
     day: 'numeric', month: 'short', year: 'numeric'
   })
 }
+
+
+export type ProjectionLevel = 'warning' | 'watch' | 'stable'
+
+export interface ProjectionResult {
+  velocityDbp: number
+  velocitySbp: number
+  weeksToDbpThreshold: number | null
+  weeksToSbpThreshold: number | null
+  level: ProjectionLevel
+  message: string
+  projectedDbpPoints: number[]
+  projectedSbpPoints: number[]
+}
+
+export function calculateProjection(patient: Patient): ProjectionResult | null {
+  const visits = patient.visits
+  if (!visits || visits.length < 2) return null
+
+  const baseline = visits[0]
+  const latest   = visits[visits.length - 1]
+
+  const weeksSpan = Math.max(1, latest.ga - baseline.ga)
+  const dbpDelta  = latest.dbp - baseline.dbp
+  const sbpDelta  = latest.sbp - baseline.sbp
+
+  const velocityDbp = dbpDelta / weeksSpan
+  const velocitySbp = sbpDelta / weeksSpan
+
+  if (velocityDbp <= 0 && velocitySbp <= 0) {
+    return {
+      velocityDbp,
+      velocitySbp,
+      weeksToDbpThreshold: null,
+      weeksToSbpThreshold: null,
+      level: 'stable',
+      message: 'Blood pressure is stable or decreasing. Continue routine monitoring.',
+      projectedDbpPoints: [],
+      projectedSbpPoints: [],
+    }
+  }
+
+  const weeksToDbpThreshold = velocityDbp > 0 && latest.dbp < WHO_DBP_THRESHOLD
+    ? Math.ceil((WHO_DBP_THRESHOLD - latest.dbp) / velocityDbp)
+    : null
+
+  const weeksToSbpThreshold = velocitySbp > 0 && latest.sbp < WHO_SBP_THRESHOLD
+    ? Math.ceil((WHO_SBP_THRESHOLD - latest.sbp) / velocitySbp)
+    : null
+
+  const projectedDbpPoints = Array.from({ length: 9 }, (_, i) =>
+    Math.round(latest.dbp + velocityDbp * i)
+  )
+  const projectedSbpPoints = Array.from({ length: 9 }, (_, i) =>
+    Math.round(latest.sbp + velocitySbp * i)
+  )
+
+  const soonest = [weeksToDbpThreshold, weeksToSbpThreshold]
+    .filter((w): w is number => w !== null)
+    .sort((a, b) => a - b)[0] ?? null
+
+  let level: ProjectionLevel = 'stable'
+  let message = 'Blood pressure trend is being monitored. Continue scheduled visits.'
+
+  if (soonest !== null) {
+    if (soonest <= 4) {
+      level = 'warning'
+      message = `At the current rate of rise, this patient's blood pressure is projected to reach the danger threshold in approximately ${soonest} week${soonest === 1 ? '' : 's'}. Consider scheduling an earlier visit.`
+    } else if (soonest <= 8) {
+      level = 'watch'
+      message = `Blood pressure is rising at ${velocityDbp.toFixed(1)} mmHg/week. Projected to approach the danger threshold in approximately ${soonest} weeks. Monitor closely.`
+    }
+  } else if (velocityDbp > 0 || velocitySbp > 0) {
+  
+    level = 'stable'
+    message = 'Blood pressure is above or at the danger threshold. See active alert.'
+  }
+
+  return {
+    velocityDbp,
+    velocitySbp,
+    weeksToDbpThreshold,
+    weeksToSbpThreshold,
+    level,
+    message,
+    projectedDbpPoints,
+    projectedSbpPoints,
+  }
+}
