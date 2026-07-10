@@ -22,6 +22,12 @@ AncaTrack is a web-based clinical decision support tool designed for doctors in 
 | Nurse  | j.mutesi@bugesera.rw         | password123  |
 | Admin  | admin@bugesera.rw            | password123  |
 
+## Demo patient login credentials
+
+| Role   | Name                  | PIN   |
+|--------|-----------------------|-------|
+|Patient | Mwiza Angel           | 1234  |
+
 ---
 
 ## Demo Video
@@ -40,6 +46,7 @@ AncaTrack is a web-based clinical decision support tool designed for doctors in 
 | Database   | MongoDB (Atlas cloud), Mongoose                     |
 | Auth       | JWT + bcrypt                                        |
 | Deployment | Render (backend Web Service + frontend Static Site) |
+| SMS	       | Africa's Talking                                    |
 
 
 ---
@@ -117,19 +124,114 @@ Open `http://localhost:5173` in your browser and log in with one of the roles pr
 
 ## Core Features
 
-**BP Trajectory alerting:** automatically detects dangerous blood pressure rises across ANC visits using WHO threshold rules (diastolic rise ≥15 mmHg from baseline, systolic ≥140 mmHg, or either combined with proteinuria ≥1+). Alerts are stored in MongoDB and shown on the doctor dashboard and individual patient pages.
+## Doctor-Facing Dashboard
 
-**Pre-eclampsia risk score:** computes a weighted 0–100 score per patient across six clinical factors: BP trajectory (30 pts), absolute BP threshold (25 pts), proteinuria (20 pts), parity (10 pts), velocity of BP rise (10 pts), and maternal age (5 pts). Score is displayed with a visual breakdown and band classification (Low / Medium / High).
+- **Live stats:** total patients, high-risk count, unresolved alerts
+- **BP overview chart:** displays all assigned patients with WHO threshold markers
+- **Active alerts section:** shows unresolved alerts with acknowledge/escalate actions
+- **Recent patients table:** quick access to patient records
 
-**Doctor dashboard:** shows live stats (total patients, high-risk count, unresolved alerts), a BP overview chart for all assigned patients with WHO threshold markers, an active alerts section, and a recent patients table.
 
-**Patient detail view:** full visit history, BP trend chart (line/bar toggle) with WHO danger-zone lines, alert banners with acknowledge and escalate actions, risk score card, and patient info.
+## Patient Management
 
-**CSV/Excel bulk import:** nurses can upload a `.xlsx` or `.csv` file of multiple patient visits at once. The system matches existing patients by name and date of birth, creates new patient records for unrecognized entries, validates each row, runs the alert engine automatically after import, and returns a row-by-row result summary.
+- **Patient list:** view all assigned patients with risk indicators
+- **Patient detail view:** full visit history, BP trend chart (line/bar toggle) with WHO danger-zone lines
+- **Alert banners:** display active alerts with acknowledge and escalate actions
+- **Risk score card:** weighted 0–100 score with visual breakdown and band classification (Low/Medium/High)
+- **Visit recording:** add new visits with live alert preview before saving
 
-**Role-based access control:** doctors see only their assigned patients; nurses can register patients and record visits; admins manage user accounts. JWT authentication protects all API endpoints.
 
-**Admin panel:** create new users, assign roles (doctor/nurse/admin), and activate or deactivate accounts.
+## Pre-eclampsia Risk Score
+
+Computes a weighted 0–100 score across six clinical factors:
+
+| Factor | Weight |
+|--------|--------|
+| BP Trajectory (diastolic rise from baseline) | 30 pts |
+| Absolute BP Threshold (≥140/90) | 25 pts |
+| Proteinuria | 20 pts |
+| Parity | 10 pts |
+| Velocity of BP Rise | 10 pts |
+| Maternal Age | 5 pts |
+
+Score is displayed with a visual breakdown and band classification (Low / Medium / High).
+
+
+## BP Trajectory Alerting
+
+Automatically detects dangerous blood pressure rises across ANC visits using WHO threshold rules:
+
+- Diastolic rise ≥15 mmHg from baseline
+- Systolic ≥140 mmHg
+- Diastolic ≥90 mmHg
+- Combined risk: high BP + proteinuria ≥1+
+
+Alerts are stored in MongoDB and shown on the doctor dashboard and individual patient pages.
+
+
+## CSV/Excel Bulk Import
+
+Nurses can upload a `.xlsx` or `.csv` file of multiple patient visits at once:
+
+- Matches existing patients by name and date of birth
+- Creates new patient records for unrecognized entries
+- Validates each row
+- Runs the alert engine automatically after import
+- Returns a row-by-row result summary
+
+
+## Role-Based Access Control
+
+| Role | Permissions |
+|------|-------------|
+| **Doctor** | View assigned patients, record visits, acknowledge/escalate alerts, view patient details |
+| **Nurse** | Register patients, record visits, bulk import |
+| **Admin** | Manage user accounts, all doctor/nurse permissions |
+
+JWT authentication protects all API endpoints. Patient filtering is enforced at the API level — doctors see only their assigned patients.
+
+
+## Admin Panel
+
+- Create new users
+- Assign roles (doctor/nurse/admin)
+- Activate or deactivate accounts
+- View all users
+
+
+## Patient Portal
+
+Patients can log in using their phone number and a PIN set during registration:
+
+- View their own BP readings in plain language
+- See visit history
+- Check next scheduled visit date
+- View risk status (Normal/Monitor/High)
+- Simple status indicator showing whether readings are within normal range or need attention
+
+**Language support:** Toggle between English and Kinyarwanda for all patient-facing content.
+
+
+## SMS Notifications
+
+When a high-risk alert fires after a visit is recorded:
+
+- **Patient receives an SMS:** "Your blood pressure reading needs attention. Please contact your clinic."
+- **Doctor receives an SMS:** Clinical summary with patient name, threshold breached, and recommendation to review.
+
+Works on any MTN or Airtel Rwanda phone — no internet or smartphone needed.
+
+
+## USSD Interface
+
+For patients with basic phones and no data plan:
+
+- Dial a short code from any phone
+- Menu options: check last BP reading, check next visit date, contact doctor
+- Works with zero data and zero internet
+- PIN-authenticated session for security
+
+**Status:** Fully built and tested in Africa's Talking sandbox. Live shortcode registration is the final deployment step.
 
 **Responsive design:** TopNav collapses to a hamburger menu on mobile; patient detail and risk score card adapt to narrow screens.
 
@@ -173,28 +275,6 @@ The application is deployed on Render using a monorepo structure:
 - Environment: `VITE_API_URL` pointing to the backend service URL
 
 Database is hosted on MongoDB Atlas with network access open to all IPs
-
----
-
-## CSV Import Format
-
-To use the bulk import feature, prepare an Excel or CSV file with these exact column headers in row 1:
-
-| Column | Description | Example |
-|--------|-------------|---------|
-| `patientName` | Full name | Mwiza Angel |
-| `dob` | Date of birth | 12/03/1996 |
-| `edd` | Estimated due date | 14/09/2026 |
-| `parity` | Pregnancy history | G2P1 |
-| `insurance` | Insurance type | Mutuelle |
-| `visitDate` | Date of visit | 20/06/2026 |
-| `ga` | Gestational age (weeks) | 28 |
-| `sbp` | Systolic BP (mmHg) | 136 |
-| `dbp` | Diastolic BP (mmHg) | 88 |
-| `proteinuria` | None / Trace / 1+ / 2+ / 3+ | 1+ |
-| `weight` | Weight (kg) | 65 |
-| `notes` | Optional notes | — |
-
 ---
 
 ## Testing
@@ -265,36 +345,6 @@ https://ancatrack-frontend.onrender.com
   viewports; useIsMobile hook triggers layout changes at 768px
   breakpoint, tested at 12 Pro width
 
-## Analysis of results
-
-AncaTrack was built around three objectives from the proposal: detect
-dangerous BP trajectories automatically, surface risk to doctors at the
-point of care, and reduce the manual data entry burden.
-
-**BP trajectory detection** The alert engine correctly flags
-diastolic rises of 15mmHg or more from baseline, systolic readings above
-140mmHg, and the combined pre-eclampsia pattern of elevated BP with
-proteinuria. Testing confirmed no false positives for patients with stable
-readings and correct high-severity classification for patients meeting WHO
-criteria.
-
-**Clinical decision support at point of care** The dashboard,
-patient detail page, and live alert preview all surface risk information
-at the moment it is needed. Doctors can acknowledge or escalate alerts
-directly, and every action is recorded with a timestamp.
-
-**Reducing manual data entry** The CSV bulk import
-removes the one-by-one bottleneck for batch visits. However, the current
-version requires exact column names, which may not match every hospital's
-file format. Flexible column mapping is actively in development to
-address this.
-
-**Overall scope alignment:** All core features defined in the proposal
-are implemented and live; alerting, risk scoring, dashboard, patient
-records, role-based access, and admin management. The system runs in a
-standard browser with no installation, matching the proposal's deployment
-constraint for district hospital computers.
-
 ---
 
 ## Discussion
@@ -306,11 +356,7 @@ factors into a transparent, explainable score that a doctor can walk a
 patient through, which matters for adoption, since clinicians don't act
 on scores they can't explain.
 
-The CSV import addressed a real workflow problem identified during
-development, a nurse recording 10 visits one by one is a bottleneck
-that discourages use. One upload replacing ten form submissions is the
-kind of workload reduction the literature review identified as critical
-for digital health tool adoption in Rwanda.
+The patient portal and USSD interface extend the platform's reach beyond the clinic. Patients with smartphones can check their readings online; patients with basic phones can access the same information via USSD. This dual-channel approach addresses the full spectrum of patient accessibility in Rwanda.
 
 One limitation: the hosting tier introduces a cold-start
 delay of up to a few seconds after inactivity, which is not acceptable in
@@ -320,25 +366,21 @@ at the facility.
 
 ## Recommendations and Future Work
 
-The following features are actively in development and will be added
-before the final defense:
+### Short-Term (Next Phase)
 
-**Trajectory projection:** instead of alerting only after a threshold
-is crossed, the system will project where a patient's BP is heading
-and warn the doctor before the danger point is reached.
+- **Pregnancy outcome recording:** track delivery, stillbirth, maternal complications, or referrals to higher facilities
+- **Automated follow-up reminders:** when a high-risk patient misses a visit, system automatically sends SMS nudge and notifies doctor
+- **Kinyarwanda language support for main portal:** extend language toggle beyond patient portal to include doctor dashboard and all clinical interfaces
 
-**SMS notifications:** when a high-risk alert fires, the assigned
-doctor and the patient automatically receive an SMS via Africa's Talking.
-Works on any MTN or Airtel Rwanda phone, no internet needed.
+### Medium-Term
 
-**Patient portal:** a simplified login using phone number and PIN
-where patients can view their own BP readings, next visit date, and
-risk status in plain language from any browser.
+- **Mobile app:** dedicated patient-facing mobile application
+- **Follow-up for missed visits:** automated SMS reminders for patients who miss scheduled appointments, with escalation to community health workers after multiple missed visits
 
-**USSD interface:** for patients with basic phones and no data plan,
-a menu-driven session giving access to their last BP reading and next appointment without needing a smartphone.
+### Long-Term
 
-**Flexible CSV column mapping:** the import engine will recognize
-common column name variations across different hospital file formats,
-making bulk upload more robust.
+- **IoT integration:** direct data capture from BP devices
+
+## License
+This project is developed for academic purposes as part of the BSc Software Engineering capstone at African Leadership University.
 
