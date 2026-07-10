@@ -194,7 +194,6 @@ export default function Dashboard() {
         </>
       )}
 
-      {/* Recent patients table */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
           letterSpacing: '0.06em', color: '#9ca3af' }}>Recent patients</div>
