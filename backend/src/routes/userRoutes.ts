@@ -5,6 +5,18 @@ import User from '../models/User'
 const router = Router()
 
 router.use(protect)
+
+router.get('/doctors', async (_req, res: Response): Promise<void> => {
+  try {
+    const doctors = await User.find({ role: 'doctor', isActive: true })
+      .select('name email')
+      .sort({ name: 1 })
+    res.json({ doctors })
+  } catch {
+    res.status(500).json({ message: 'Failed to fetch doctors' })
+  }
+})
+
 router.use(restrictTo('admin'))
 
 router.get('/', async (_req, res: Response): Promise<void> => {
