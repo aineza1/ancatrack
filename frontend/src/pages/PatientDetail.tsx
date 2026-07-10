@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { evaluatePatient, formatDate, calculateRiskScore } from '../utils/alertEngine'
+import { evaluatePatient, formatDate, calculateRiskScore, calculateProjection } from '../utils/alertEngine'
 import RiskScoreCard from '../components/ui/RiskScoreCard'
 import toast from 'react-hot-toast'
 import { useEffect, useRef, useState } from 'react'
@@ -40,10 +40,41 @@ export default function PatientDetail() {
     if (!patient || !chartRef.current) return
     if (chartInstance.current) chartInstance.current.destroy()
 
-    const labels  = patient.visits.map((v: any, i: number) => `Visit ${i + 1} (${v.ga}w)`)
+    const isBar = chartType === 'bar'
+
+    const historicalLabels = patient.visits.map((v: any, i: number) => `Visit ${i + 1} (${v.ga}w)`)
     const sbpData = patient.visits.map((v: any) => v.sbp)
     const dbpData = patient.visits.map((v: any) => v.dbp)
-    const isBar   = chartType === 'bar'
+
+    const patientForEngine = {
+      ...patient,
+      id: patient._id,
+      dob: typeof patient.dob === 'string' ? patient.dob : new Date(patient.dob).toISOString(),
+      visits: patient.visits.map((v: any) => ({
+        ...v,
+        date: typeof v.date === 'string' ? v.date : new Date(v.date).toISOString(),
+      }))
+    }
+
+    const projection = !isBar ? calculateProjection(patientForEngine) : null
+    const hasProjection = projection && projection.level !== 'stable' &&
+      projection.projectedSbpPoints.length > 0
+
+    const projectionWeeks = hasProjection ? 8 : 0
+    const projectionLabels = Array.from({ length: projectionWeeks }, (_, i) =>
+      `+${i + 1}w (proj.)`
+    )
+    const allLabels = [...historicalLabels, ...projectionLabels]
+
+    const sbpHistorical = [...sbpData, ...Array(projectionWeeks).fill(null)]
+    const dbpHistorical = [...dbpData, ...Array(projectionWeeks).fill(null)]
+
+    const sbpProjected = hasProjection
+      ? [...Array(sbpData.length - 1).fill(null), sbpData[sbpData.length - 1], ...projection!.projectedSbpPoints.slice(1, projectionWeeks + 1)]
+      : []
+    const dbpProjected = hasProjection
+      ? [...Array(dbpData.length - 1).fill(null), dbpData[dbpData.length - 1], ...projection!.projectedDbpPoints.slice(1, projectionWeeks + 1)]
+      : []
 
     const dangerPlugin = {
       id: 'dangerZone',
@@ -64,39 +95,69 @@ export default function PatientDetail() {
       }
     }
 
+    const datasets: any[] = [
+      {
+        label: 'SBP',
+        data: sbpHistorical,
+        borderColor: '#4a7fa7',
+        backgroundColor: isBar ? 'rgba(74,127,167,0.75)' : 'rgba(74,127,167,0.08)',
+        borderWidth: isBar ? 0 : 2.5,
+        pointRadius: isBar ? 0 : 5,
+        pointBackgroundColor: '#4a7fa7',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        tension: 0.35,
+        fill: !isBar,
+      },
+      {
+        label: 'DBP',
+        data: dbpHistorical,
+        borderColor: '#ef4444',
+        backgroundColor: isBar ? 'rgba(239,68,68,0.75)' : 'rgba(239,68,68,0.08)',
+        borderWidth: isBar ? 0 : 2.5,
+        pointRadius: isBar ? 0 : 5,
+        pointBackgroundColor: '#ef4444',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        tension: 0.35,
+        fill: !isBar,
+      },
+    ]
+
+    if (hasProjection) {
+      datasets.push({
+        label: 'SBP projection',
+        data: sbpProjected,
+        borderColor: 'rgba(74,127,167,0.5)',
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        borderDash: [6, 4],
+        pointRadius: 3,
+        pointBackgroundColor: 'rgba(74,127,167,0.5)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 1,
+        tension: 0.35,
+        fill: false,
+      })
+      datasets.push({
+        label: 'DBP projection',
+        data: dbpProjected,
+        borderColor: 'rgba(239,68,68,0.5)',
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        borderDash: [6, 4],
+        pointRadius: 3,
+        pointBackgroundColor: 'rgba(239,68,68,0.5)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 1,
+        tension: 0.35,
+        fill: false,
+      })
+    }
+
     chartInstance.current = new Chart(chartRef.current, {
       type: chartType,
-      data: {
-        labels,
-        datasets: [
-          {
-            label: 'SBP',
-            data: sbpData,
-            borderColor: '#4a7fa7',
-            backgroundColor: isBar ? 'rgba(74,127,167,0.75)' : 'rgba(74,127,167,0.08)',
-            borderWidth: isBar ? 0 : 2.5,
-            pointRadius: isBar ? 0 : 5,
-            pointBackgroundColor: '#4a7fa7',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            tension: 0.35,
-            fill: !isBar,
-          },
-          {
-            label: 'DBP',
-            data: dbpData,
-            borderColor: '#ef4444',
-            backgroundColor: isBar ? 'rgba(239,68,68,0.75)' : 'rgba(239,68,68,0.08)',
-            borderWidth: isBar ? 0 : 2.5,
-            pointRadius: isBar ? 0 : 5,
-            pointBackgroundColor: '#ef4444',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            tension: 0.35,
-            fill: !isBar,
-          }
-        ]
-      },
+      data: { labels: allLabels, datasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -140,13 +201,13 @@ export default function PatientDetail() {
   }
 
   if (loading) return <div style={{ padding: 24, textAlign: 'center' }}>Loading patient...</div>
-  if (error)   return (
+  if (error) return (
     <div style={{ padding: 24 }}>
       <p style={{ color: '#dc2626', marginBottom: 12 }}>{error}</p>
       <button onClick={() => navigate('/patients')}
         style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8,
           padding: '5px 11px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-        ← Back to patients
+        Back to patients
       </button>
     </div>
   )
@@ -162,10 +223,11 @@ export default function PatientDetail() {
     }))
   }
 
-  const alertResult = evaluatePatient(patientForEngine)
-  const { band }    = calculateRiskScore(patientForEngine)
-  const latest      = patient.visits[patient.visits.length - 1]
-  const baseline    = patient.visits[0]
+  const alertResult  = evaluatePatient(patientForEngine)
+  const { band }     = calculateRiskScore(patientForEngine)
+  const projection   = calculateProjection(patientForEngine)
+  const latest       = patient.visits[patient.visits.length - 1]
+  const baseline     = patient.visits[0]
 
   const dotColor = band === 'high' ? '#ef4444' : band === 'medium' ? '#f59e0b' : '#22c55e'
   const badgeMap: Record<string, [string, string]> = {
@@ -174,6 +236,11 @@ export default function PatientDetail() {
     low:    ['#dcfce7', '#166534'],
   }
   const [badgeBg, badgeColor] = badgeMap[band]
+
+  const showProjectionBanner = projection &&
+    projection.level !== 'stable' &&
+    alerts.length === 0 &&
+    !alertResult
 
   return (
     <div>
@@ -207,7 +274,7 @@ export default function PatientDetail() {
             borderRadius: 12, padding: '14px 16px', marginBottom: 16
           }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#991b1b', marginBottom: 4 }}>
-               {alert.flags.some((f: any) => f.type === 'COMBINED_RISK')
+              {alert.flags.some((f: any) => f.type === 'COMBINED_RISK')
                 ? 'Combined pre-eclampsia risk — WHO criteria met'
                 : 'BP trajectory alert — WHO threshold exceeded'}
             </div>
@@ -233,16 +300,41 @@ export default function PatientDetail() {
 
         {alerts.length === 0 && alertResult && (
           <div style={{
-            background: '#fffcf0', border: '1px solid #fde68a',
+            background: '#fff5f5', border: '1px solid #fecaca',
             borderRadius: 12, padding: '14px 16px', marginBottom: 16
           }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#92400e', marginBottom: 4 }}>
-               {alertResult.flags.some(f => f.type === 'COMBINED_RISK')
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#991b1b', marginBottom: 4 }}>
+              {alertResult.flags.some(f => f.type === 'COMBINED_RISK')
                 ? 'Combined pre-eclampsia risk — WHO criteria met'
                 : 'BP trajectory alert — WHO threshold exceeded'}
             </div>
             <div style={{ fontSize: 13, color: '#555', lineHeight: 1.5 }}>
               {alertResult.flags.map(f => f.detail).join(' · ')}
+            </div>
+          </div>
+        )}
+
+        {showProjectionBanner && (
+          <div style={{
+            background: projection!.level === 'warning' ? '#fffbeb' : '#f0f9ff',
+            border: `1px solid ${projection!.level === 'warning' ? '#fde68a' : '#bae6fd'}`,
+            borderRadius: 12, padding: '14px 16px', marginBottom: 16
+          }}>
+            <div style={{
+              fontSize: 14, fontWeight: 700, marginBottom: 4,
+              color: projection!.level === 'warning' ? '#92400e' : '#0369a1'
+            }}>
+              {projection!.level === 'warning'
+                ? 'BP trajectory warning: threshold approach projected'
+                : 'BP trend under observation'}
+            </div>
+            <div style={{ fontSize: 13, color: '#555', lineHeight: 1.5 }}>
+              {projection!.message}
+            </div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>
+              Current rate of rise: {projection!.velocityDbp.toFixed(1)} mmHg/week (DBP)
+              {projection!.weeksToDbpThreshold !== null &&
+                ` · Projected to reach 90 mmHg in ${projection!.weeksToDbpThreshold} week${projection!.weeksToDbpThreshold === 1 ? '' : 's'}`}
             </div>
           </div>
         )}
@@ -255,7 +347,7 @@ export default function PatientDetail() {
           display: 'grid',
           gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
           gap: 14, marginBottom: 20
-       }}>
+        }}>
           <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 18px' }}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const,
               letterSpacing: '0.06em', color: '#9ca3af', marginBottom: 12 }}>Patient info</div>
@@ -277,7 +369,7 @@ export default function PatientDetail() {
           <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 18px' }}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const,
               letterSpacing: '0.06em', color: '#9ca3af', marginBottom: 12 }}>
-              Latest visit — {formatDate(latest.date)}
+              Latest visit: {formatDate(latest.date)}
             </div>
             {[
               ['GA',          `${latest.ga} weeks`],
@@ -326,11 +418,14 @@ export default function PatientDetail() {
           <div style={{ position: 'relative', height: 200 }}>
             <canvas ref={chartRef} />
           </div>
-          <div style={{ display: 'flex', gap: 20, marginTop: 12 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 12 }}>
             {[
-              { color: '#4a7fa7',            label: 'Systolic (SBP)' },
-              { color: '#ef4444',            label: 'Diastolic (DBP)' },
+              { color: '#4a7fa7',             label: 'Systolic (SBP)' },
+              { color: '#ef4444',             label: 'Diastolic (DBP)' },
               { color: 'rgba(239,68,68,0.3)', label: 'Danger zone ≥ 140/90' },
+              ...(chartType === 'line' && projection && projection.level !== 'stable'
+                ? [{ color: 'rgba(74,127,167,0.5)', label: 'Projected trend (dashed)' }]
+                : [])
             ].map(l => (
               <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6b7280' }}>
                 <div style={{ width: 16, height: 2.5, borderRadius: 2, background: l.color }} />
