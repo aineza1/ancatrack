@@ -17,7 +17,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 
     if (input === '') {
       res.send(
-        `CON Welcome to AncaTrack\nBugesera District Hospital\n\n1. Check my BP reading\n2. My next visit date\n3. Contact my doctor\n\nEnter your name to continue`
+        `CON Welcome to AncaTrack\nNyamata District Hospital\n\n1. Check my BP reading\n2. My next visit date\n3. Contact my doctor\n\nEnter your name to continue`
       )
       return
     }
@@ -140,11 +140,11 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       }
 
       if (choice === '3') {
-       
+
         const doctor = patient.assignedDoctor as any
         res.send(
           `END Your doctor:\n${doctor?.name || 'Contact hospital'}\n\n` +
-          `Bugesera District Hospital\n` +
+          `BNyamata District Hospital\n` +
           `For emergencies:\n+250 788 000 000`
         )
         return
