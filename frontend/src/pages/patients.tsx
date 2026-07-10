@@ -54,6 +54,28 @@ export default function Patients() {
                       {isHigh ? 'High risk' : 'Normal'}
                     </span>
                   </td>
+                  <td style={{ padding: '12px 14px' }}>
+                    <button
+                      onClick={async (e) => {
+                      e.stopPropagation()
+                      const pin = prompt(`Set PIN for ${p.name} (4 digits):`)
+                      if (!pin || pin.length < 4) return
+                      try {
+                      await api.patch(`/portal/${p._id}/set-pin`, { pin })
+                      } catch {
+                      console.error('Failed to set PIN')
+                    }
+                  }}
+                  style={{
+                    fontSize: 11, fontWeight: 600, padding: '3px 10px',
+                    borderRadius: 6, cursor: 'pointer',
+                    background: '#f0f9ff', color: '#0369a1',
+                    border: '1px solid #bae6fd'
+                 }}
+                >
+                  Set PIN
+                </button>
+                </td>
                 </tr>
               )
             })}
