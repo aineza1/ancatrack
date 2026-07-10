@@ -1,4 +1,5 @@
-import AfricasTalking from 'africastalking'
+
+const AfricasTalking = require('africastalking') as (config: { apiKey: string; username: string }) => any
 
 const at = AfricasTalking({
   apiKey:   process.env.AT_API_KEY!,
