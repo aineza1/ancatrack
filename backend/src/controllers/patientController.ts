@@ -108,8 +108,14 @@ export const addVisit = async (req: AuthRequest, res: Response): Promise<void> =
         severity: result.severity,
         status:   'active',
       })
+      if (patient.phone && (result.severity === 'high' || result.severity === 'medium')) {
+        const { sendSMS, buildPatientSMS } = await import('../utils/smsService')
+        await sendSMS(
+          patient.phone,
+          buildPatientSMS(patient.name, result.severity)
+        )
+      }
     }
-
     res.status(201).json({ visit: newVisit, alert })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to record visit'
