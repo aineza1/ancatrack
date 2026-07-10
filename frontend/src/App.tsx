@@ -9,6 +9,8 @@ import Alerts from './pages/alerts'
 import Admin from './pages/Admin'
 import TopNav from './components/layout/TopNav'
 import ImportVisits from './pages/ImportVisits'
+import PatientLogin     from './pages/PatientLogin'
+import PatientDashboard from './pages/PatientDashboard'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('token')
@@ -28,6 +30,8 @@ function App() {
       />
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/patient-login" element={<PatientLogin />} />
+        <Route path="/patient"       element={<PatientDashboard />} />
         <Route path="/" element={<ProtectedRoute><TopNav /></ProtectedRoute>}>
           <Route path="/" element={<Dashboard />} />
           <Route path="patients" element={<Patients />} />
