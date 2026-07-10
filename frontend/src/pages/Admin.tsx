@@ -24,7 +24,7 @@ export default function Admin() {
 
   const [form, setForm] = useState({
     name: '', email: '', password: '', role: 'nurse' as Role,
-    facility: 'Bugesera District Hospital'
+    facility: 'Nyamata District Hospital'
   })
 
   const fetchUsers = async () => {
@@ -46,7 +46,7 @@ export default function Admin() {
     try {
       const res = await api.post('/users', form)
       setUsers(prev => [res.data.user, ...prev])
-      setForm({ name: '', email: '', password: '', role: 'nurse', facility: 'Bugesera District Hospital' })
+      setForm({ name: '', email: '', password: '', role: 'nurse', facility: 'Nyamata District Hospital' })
       setShowForm(false)
       toast.success(`${res.data.user.name} added successfully`)
     } catch (err: any) {
@@ -104,7 +104,6 @@ export default function Admin() {
   return (
     <div style={{ padding: 24, maxWidth: 1100, margin: '0 auto' }}>
 
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between',
         alignItems: 'center', marginBottom: 24 }}>
         <div>
@@ -122,7 +121,6 @@ export default function Admin() {
         </button>
       </div>
 
-      {/* Add user form */}
       {showForm && (
         <div style={{ background: '#fff', border: '1px solid #e5e7eb',
           borderRadius: 12, padding: 20, marginBottom: 24 }}>
@@ -160,7 +158,7 @@ export default function Admin() {
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ fontSize: 12, fontWeight: 600, color: '#4b5563',
                   display: 'block', marginBottom: 5 }}>Facility</label>
-                <input style={inputStyle} placeholder="Bugesera District Hospital"
+                <input style={inputStyle} placeholder="Nyamata District Hospital"
                   value={form.facility} onChange={e => setForm(f => ({ ...f, facility: e.target.value }))} />
               </div>
             </div>
@@ -176,7 +174,6 @@ export default function Admin() {
         </div>
       )}
 
-      {/* Stats row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 24 }}>
         {(['doctor','nurse','admin'] as Role[]).map(role => (
           <div key={role} style={{ background: '#fff', border: '1px solid #e5e7eb',
@@ -193,7 +190,6 @@ export default function Admin() {
         ))}
       </div>
 
-      {/* Users table */}
       <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
